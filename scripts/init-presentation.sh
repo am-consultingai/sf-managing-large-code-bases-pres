@@ -1,37 +1,46 @@
 #!/usr/bin/env bash
 #
-# new-presentation.sh — scaffold a brand-new AM Consulting presentation.
+# init-presentation.sh — turn THIS cloned template into a new presentation.
 #
-# What it does:
-#   1. Clones this template into ./<name> (a new folder inside your CURRENT
-#      working directory) and detaches it from the template's git history.
-#   2. Creates a NEW public GitHub repo named <name>, commits, and pushes.
-#   3. Enables GitHub Pages (GitHub Actions source) so the deck deploys live.
+# Run it from inside a fresh clone of the template. It will:
+#   1. Rename this local folder to <name> (the -n parameter).
+#   2. Detach the local repo from the template remote (removes 'origin').
+#   3. Create a new public GitHub repo named <name>, commit, and push.
+#   4. Enable GitHub Pages (GitHub Actions source) so the deck deploys live.
 #
-# The template repository itself is never modified — it is only cloned (read).
+# Your existing template clone elsewhere is unaffected; the upstream template
+# repo is never modified.
 #
-# Usage:
-#   new-presentation.sh -n <name>
+# Usage (from inside the cloned folder):
+#   ./scripts/init-presentation.sh -n <name>
 #
 # Options:
-#   -n <name>   Folder + repo name (required). Allowed: letters, digits, . _ -
+#   -n <name>   New folder + repo name (required). Allowed: letters digits . _ -
 #   -h          Show this help.
 #
 # Environment overrides (optional):
-#   TEMPLATE_REPO   owner/repo to clone from
-#                   (default: am-consultingai/am-consulting-presentation-template)
-#   GH_OWNER        account/org to create the new repo under
-#                   (default: your authenticated gh login)
+#   GH_OWNER    account/org to create the new repo under
+#               (default: your authenticated gh login)
 #
 set -euo pipefail
-
-TEMPLATE_REPO="${TEMPLATE_REPO:-am-consultingai/am-consulting-presentation-template}"
 
 say()  { printf '\033[1;36m▸ %s\033[0m\n' "$*"; }
 ok()   { printf '\033[1;32m✓ %s\033[0m\n' "$*"; }
 err()  { printf '\033[1;31m✗ %s\033[0m\n' "$*" >&2; }
 
-usage() { sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() {
+  cat <<'EOF'
+init-presentation.sh — turn this cloned template into a new presentation.
+
+Usage (from inside the cloned folder):
+  ./scripts/init-presentation.sh -n <name>
+
+  -n <name>   New folder + repo name (required: letters, digits, . _ -)
+  -h          Show this help.
+
+Env: GH_OWNER overrides the account/org for the new repo.
+EOF
+}
 
 NAME=""
 while getopts ":n:h" opt; do
@@ -52,35 +61,43 @@ for tool in git gh npm; do
 done
 gh auth status >/dev/null 2>&1 || { err "GitHub CLI not authenticated. Run: gh auth login"; exit 1; }
 
-PARENT="$PWD"
-TARGET="$PARENT/$NAME"
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+[ -n "$PROJECT_ROOT" ] || { err "Not inside a git repository. Clone the template first, then run this from inside it."; exit 1; }
+[ -d "$PROJECT_ROOT/src/deck-kit" ] || { err "This doesn't look like a template clone (no src/deck-kit/). Run from inside a cloned template."; exit 1; }
 
-# Don't scaffold inside an existing deck/template checkout (would nest projects).
-if [ -d "$PARENT/src/deck-kit" ]; then
-  err "You're inside a deck-kit project ($PARENT)."
-  err "cd into your projects directory first — the new deck is created in the current folder."
-  exit 1
-fi
-[ -e "$TARGET" ] && { err "'$TARGET' already exists"; exit 1; }
-
+PARENT="$(dirname "$PROJECT_ROOT")"
+OLD="$(basename "$PROJECT_ROOT")"
 OWNER="${GH_OWNER:-$(gh api user --jq .login)}"
 
-# ---- 1. clone template (read-only) + detach history ------------------------
-say "Cloning template $TEMPLATE_REPO → $NAME/"
-gh repo clone "$TEMPLATE_REPO" "$TARGET" -- --depth 1 --quiet
-cd "$TARGET"
-rm -rf .git scripts/.git
-git init -q -b main
+# ---- 1. rename the local folder --------------------------------------------
+if [ "$OLD" != "$NAME" ]; then
+  TARGET="$PARENT/$NAME"
+  [ -e "$TARGET" ] && { err "'$TARGET' already exists"; exit 1; }
+  cd "$PARENT"
+  mv "$OLD" "$NAME"
+  cd "$TARGET"
+  ok "Renamed local folder: $OLD → $NAME"
+else
+  cd "$PROJECT_ROOT"
+  ok "Folder already named '$NAME'"
+fi
 
-# ---- 2. personalize ---------------------------------------------------------
+# ---- 2. detach from the template remote ------------------------------------
+if git remote get-url origin >/dev/null 2>&1; then
+  git remote remove origin
+  ok "Detached from template remote (removed 'origin')"
+fi
+git branch -M main   # deploy workflow triggers on push to main
+
+# ---- 3. personalize + commit -----------------------------------------------
+npm pkg set name="$NAME" >/dev/null
 TITLE="$(printf '%s' "$NAME" | tr '_-' '  ')"
 sed -i "s|<title>.*</title>|<title>${TITLE} — AM Consulting</title>|" index.html
-ok "Set browser title to: ${TITLE} — AM Consulting"
-
 git add -A
 git commit -q -m "Initialize presentation: $NAME (from template)"
+ok "Personalized package name + browser title, committed"
 
-# ---- 3. create remote repo, enable Pages, push ------------------------------
+# ---- 4. create remote repo, enable Pages, push -----------------------------
 say "Creating public GitHub repo $OWNER/$NAME"
 gh repo create "$OWNER/$NAME" --public --source=. --remote=origin \
   --description "AM Consulting presentation: $NAME"
@@ -111,8 +128,8 @@ fi
 
 # ---- done -------------------------------------------------------------------
 echo
-ok "Presentation '$NAME' is ready."
-echo "   Folder : $TARGET"
+ok "Presentation '$NAME' is initialized."
+echo "   Folder : $PARENT/$NAME"
 echo "   Repo   : https://github.com/$OWNER/$NAME"
 if [ "$PAGES_OK" -eq 1 ]; then
   echo "   Live   : https://$OWNER.github.io/$NAME/   (first deploy ~1–2 min)"
@@ -121,5 +138,4 @@ else
   echo "            gh api -X POST repos/$OWNER/$NAME/pages -f build_type=workflow"
 fi
 echo
-echo "   Next:  cd \"$NAME\" && npm install && npm run dev"
-echo "          then edit src/presentation/slides.tsx"
+echo "   Next:  npm install && npm run dev   →   edit src/presentation/slides.tsx"

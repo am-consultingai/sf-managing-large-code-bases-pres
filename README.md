@@ -15,21 +15,21 @@ Navigate: **→ / Space / click** next · **←** back · **F** fullscreen · **
 
 ## Make a new presentation
 
-One command (run from your projects directory, not inside this repo):
+Clone the template, then initialize it as a new deck:
 
 ```bash
-scripts/new-presentation.sh -n my-talk
+git clone <template-url> my-talk      # or "Use this template" → clone
+cd my-talk
+./scripts/init-presentation.sh -n my-talk
 ```
 
-This clones the template into `./my-talk`, creates a new public GitHub repo,
-pushes, and enables GitHub Pages — all without touching this template repo.
-Then:
+`init-presentation.sh` renames the folder, detaches from the template remote,
+creates a new public GitHub repo, pushes, and enables GitHub Pages — without
+touching the template. Then:
 
-1. `cd my-talk && npm install && npm run dev`
+1. `npm install && npm run dev`
 2. Edit **`src/presentation/slides.tsx`** — the only file you need to touch.
-3. Push to `main` → it deploys automatically to `https://<owner>.github.io/my-talk/`.
-
-(You can also use GitHub's **Use this template** button for a manual copy.)
+3. Push to `main` → deploys automatically to `https://<owner>.github.io/my-talk/`.
 
 See [`CLAUDE.md`](./CLAUDE.md) for the full authoring guide and layout reference
 — it's also the brief an AI agent reads to build a deck for you.

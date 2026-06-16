@@ -15,28 +15,25 @@ animation · hash-based navigation · deploys to GitHub Pages via Actions.
 
 ## Create a new presentation (duplicate this template)
 
-**Recommended — the scaffolder script.** From your projects directory (NOT
-inside a deck/template checkout), run the template's script:
+**Recommended flow — clone, then init.**
 
 ```bash
-/path/to/template/scripts/new-presentation.sh -n my-talk
+# 1. Clone the template (any folder name; it gets renamed by the script):
+git clone <template-url> my-talk      # or "Use this template" → clone
+cd my-talk
+
+# 2. Initialize it as a new presentation:
+./scripts/init-presentation.sh -n my-talk
 ```
 
-It clones the template into `./my-talk`, detaches git history, creates a new
-**public** GitHub repo `my-talk`, pushes, and enables GitHub Pages — leaving the
-template repo untouched. Then `cd my-talk && npm install && npm run dev` and edit
-`src/presentation/slides.tsx`. (Tip: copy `new-presentation.sh` somewhere on your
-PATH so you can run it from anywhere.)
-
-**Manual alternatives:**
+`init-presentation.sh` (run from inside the clone) renames the local folder to
+`-n`, detaches from the template remote, creates a new **public** GitHub repo,
+pushes, and enables GitHub Pages. The upstream template repo is never touched.
 
 ```bash
-# GitHub "Use this template" → new repo, then clone it; or:
-git clone <template-url> my-talk && cd my-talk && rm -rf .git && git init -b main
+# 3. Work on the deck:
+npm install && npm run dev            # edit src/presentation/slides.tsx
 ```
-
-Then `npm install` → edit `src/presentation/slides.tsx`. Adjust the browser tab
-title in `index.html` (`<title>`).
 
 ## Author a deck from a content brief (the agent recipe)
 
