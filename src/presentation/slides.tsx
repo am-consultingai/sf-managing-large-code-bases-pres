@@ -146,16 +146,44 @@ function ComparisonSlide() {
   );
 }
 
+/** "We're all experts at prompting" — quote paired with a coding-meme GIF. */
+function PromptingExpertSlide() {
+  const gif = `${import.meta.env.BASE_URL}prompting-expert.gif`;
+  return (
+    <SlideShell bg="deep">
+      <Stagger className="flex h-full items-center gap-16">
+        <div className="flex-1">
+          <Item>
+            <span className="font-display text-7xl leading-none text-cyan/30">“</span>
+          </Item>
+          <Item>
+            <blockquote className="-mt-5 font-display text-5xl font-medium leading-[1.18] tracking-tight text-ink">
+              A great prompt → a great answer.{" "}
+              <GradientText>We're all experts at this now.</GradientText>
+            </blockquote>
+          </Item>
+          <Item>
+            <p className="mt-8 font-mono text-sm uppercase tracking-[0.25em] text-subtle">
+              — A year ago, the skill was prompting
+            </p>
+          </Item>
+        </div>
+        <Item className="shrink-0">
+          <div className="overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+            <img src={gif} alt="Confidently typing at a keyboard" className="block w-[420px]" />
+          </div>
+        </Item>
+      </Stagger>
+    </SlideShell>
+  );
+}
+
 export const slides: Slide[] = [
   // ─── Title ──────────────────────────────────────────────────────────────
   <IntroSlide />,
 
   // ─── Part 0 — Framing ───────────────────────────────────────────────────
-  <QuoteSlide
-    quote="A great prompt → a great answer."
-    highlight="We're all experts at this now."
-    attribution="A year ago, the skill was prompting"
-  />,
+  <PromptingExpertSlide />,
 
   <BulletSlide
     eyebrow="The shift"
