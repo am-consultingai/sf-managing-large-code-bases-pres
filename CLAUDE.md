@@ -98,11 +98,24 @@ The brand is the **single source of truth** and must not be overridden per slide
   drop the official `am-logo.png` / `am_favicon.png` there and update
   `tokens.ts` asset paths + `index.html` favicon.
 
-## Deploying
+## Deploying (GitHub Pages)
 
-Push to `main` → the Actions workflow builds and publishes to GitHub Pages
-(enable Pages → Source: "GitHub Actions" once per repo). `vite.config.ts` uses
-`base: "./"` so the build works at any path without configuration.
+Each presentation deploys from **its own repo** via `.github/workflows/deploy.yml`
+(push to `main` → build → publish). `vite.config.ts` uses `base: "./"`, so the
+build works at the project subpath `https://<owner>.github.io/<deck-repo>/`
+with no configuration.
+
+Visibility model: the **template repo is private**; each **duplicated deck repo
+is made public** (GitHub Pages on a private repo requires a paid plan). Enable
+Pages once per deck repo:
+
+```bash
+gh repo edit <owner>/<deck-repo> --visibility public --accept-visibility-change-consequences
+gh api -X POST repos/<owner>/<deck-repo>/pages -f build_type=workflow
+```
+
+If a deck must stay private, deploy it to Netlify / Vercel / Cloudflare Pages
+instead (point them at `npm run build` → `dist/`).
 
 ## Layout constraints
 
