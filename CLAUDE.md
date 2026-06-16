@@ -15,20 +15,28 @@ animation · hash-based navigation · deploys to GitHub Pages via Actions.
 
 ## Create a new presentation (duplicate this template)
 
-Pick one — each produces an independent repo for one talk:
+**Recommended — the scaffolder script.** From your projects directory (NOT
+inside a deck/template checkout), run the template's script:
 
 ```bash
-# A) GitHub: click "Use this template" → new repo, then clone it.
-
-# B) Clone without history (degit):
-npx degit <owner>/<this-template-repo> my-talk && cd my-talk
-
-# C) Plain copy:
-cp -r online-pres-infra my-talk && cd my-talk && rm -rf .git && git init
+/path/to/template/scripts/new-presentation.sh -n my-talk
 ```
 
-Then: `npm install` → edit `src/presentation/slides.tsx` → `npm run dev`.
-Rename the deck in `index.html` (`<title>`) and `package.json` (`name`).
+It clones the template into `./my-talk`, detaches git history, creates a new
+**public** GitHub repo `my-talk`, pushes, and enables GitHub Pages — leaving the
+template repo untouched. Then `cd my-talk && npm install && npm run dev` and edit
+`src/presentation/slides.tsx`. (Tip: copy `new-presentation.sh` somewhere on your
+PATH so you can run it from anywhere.)
+
+**Manual alternatives:**
+
+```bash
+# GitHub "Use this template" → new repo, then clone it; or:
+git clone <template-url> my-talk && cd my-talk && rm -rf .git && git init -b main
+```
+
+Then `npm install` → edit `src/presentation/slides.tsx`. Adjust the browser tab
+title in `index.html` (`<title>`).
 
 ## Author a deck from a content brief (the agent recipe)
 
