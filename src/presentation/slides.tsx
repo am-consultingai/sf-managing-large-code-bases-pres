@@ -8,7 +8,8 @@
  * Compose branded layouts from "../deck-kit/slides". Each array entry is one
  * slide. Run `npm run dev` and use → / click to advance.
  */
-import { Fragment } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import type { Slide } from "../deck-kit/engine/types";
 import {
   AgendaSlide,
@@ -20,12 +21,106 @@ import {
   GradientText,
   Item,
   ProcessSlide,
-  QuoteSlide,
   SectionDivider,
   SlideShell,
   Stagger,
 } from "../deck-kit/slides";
 import { ClaudeMark, CLAUDE_ORANGE, GithubMark, SalesforceMark } from "./Logos";
+
+/**
+ * Slide 4 — "So… what do we do with large codebases?" One repo box spawns into
+ * many, accelerating, while a live counter climbs 1 → 4 → 10 → 42 → 300+. The
+ * field overflows on purpose: a polyrepo doesn't fit in one view.
+ */
+const REPO_STAGES = [
+  { count: "1", boxes: 1, size: 104 },
+  { count: "4", boxes: 4, size: 80 },
+  { count: "10", boxes: 10, size: 58 },
+  { count: "42", boxes: 42, size: 32 },
+  { count: "300+", boxes: 78, size: 21 },
+];
+
+function LargeCodebasesSlide() {
+  const [i, setI] = useState(0);
+
+  useEffect(() => {
+    // Accelerating cadence, then a long hold on "300+" before it loops.
+    const delays = [950, 800, 650, 520, 2600];
+    let idx = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      timer = setTimeout(() => {
+        idx = (idx + 1) % REPO_STAGES.length;
+        setI(idx);
+        tick();
+      }, delays[idx]);
+    };
+    tick();
+    return () => clearTimeout(timer);
+  }, []);
+
+  const stage = REPO_STAGES[i];
+
+  return (
+    <SlideShell bg="deep">
+      <Stagger className="flex h-full flex-col">
+        <Item className="mb-2">
+          <Eyebrow>The question</Eyebrow>
+        </Item>
+        <Item>
+          <h2 className="max-w-4xl font-display text-6xl font-bold leading-tight tracking-tight text-ink">
+            So… what do we do with <GradientText>large codebases?</GradientText>
+          </h2>
+        </Item>
+
+        <Item className="mt-8 grid flex-1 grid-cols-[260px_1fr] items-center gap-12">
+          {/* Live counter */}
+          <div>
+            <div className="font-mono text-xs uppercase tracking-[0.25em] text-subtle">repos in scope</div>
+            <div className="relative mt-2 h-24">
+              <AnimatePresence mode="popLayout">
+                <motion.div
+                  key={stage.count}
+                  initial={{ y: 16, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -16, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                  className="absolute font-display text-8xl font-bold leading-none"
+                >
+                  <GradientText>{stage.count}</GradientText>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            <p className="mt-4 max-w-[220px] text-base font-light text-subtle">
+              Too much to hold in one window — that's the whole problem.
+            </p>
+          </div>
+
+          {/* Spawning repo field */}
+          <div className="flex h-[360px] flex-wrap content-center items-center justify-center gap-2.5 rounded-2xl border border-white/10 bg-panel/40 p-6">
+            <AnimatePresence mode="popLayout">
+              {Array.from({ length: stage.boxes }, (_, b) => (
+                <motion.div
+                  key={b}
+                  layout
+                  initial={{ width: 0, height: 0, opacity: 0 }}
+                  animate={{ width: stage.size, height: stage.size, opacity: 1 }}
+                  exit={{ width: 0, height: 0, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 420, damping: 30 }}
+                  className="flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-cyan/30 bg-tile"
+                >
+                  {stage.size >= 58 && (
+                    <span className="font-mono text-[11px] tracking-wide text-cyan/80">repo</span>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </Item>
+      </Stagger>
+    </SlideShell>
+  );
+}
 
 /** Opening slide: AM lockup, headline with the Claude mark + brand orange, and
  *  the Claude · GitHub · Salesforce stack row. */
@@ -196,11 +291,7 @@ export const slides: Slide[] = [
     ]}
   />,
 
-  <QuoteSlide
-    quote="So… what do we do with"
-    highlight="large codebases?"
-    attribution="Hold that question"
-  />,
+  <LargeCodebasesSlide />,
 
   <BulletSlide
     eyebrow="Polyrepos"
